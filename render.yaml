@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: orangehrm-portos-clean
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    buildCommand: docker build -t orangehrm-portos .
+    healthCheckPath: /
+    envVars:
+      - key: APACHE_DOCUMENT_ROOT
+        value: /var/www/html
+      - key: PHP_MEMORY_LIMIT
+        value: 256M
+      - key: PHP_UPLOAD_MAX_FILESIZE
+        value: 32M
+      - key: PHP_POST_MAX_SIZE
+        value: 32M
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: orangehrm-postgres-clean
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: orangehrm-postgres-clean
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: orangehrm-postgres-clean
+          property: database
+      - key: DATABASE_USER
+        fromDatabase:
+          name: orangehrm-postgres-clean
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: orangehrm-postgres-clean
+          property: password
+
+databases:
+  - name: orangehrm-postgres-clean
+    plan: free
+    databaseName: orangehrm_portos
+    user: orangehrm_user
+    postgresMajorVersion: 13

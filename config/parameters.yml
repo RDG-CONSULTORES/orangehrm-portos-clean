@@ -1,0 +1,34 @@
+# Symfony Parameters for OrangeHRM
+parameters:
+    # Database configuration for PostgreSQL
+    database_driver: pdo_pgsql
+    database_host: dpg-d34pm0ffte5s73abeq0g-a.oregon-postgres.render.com
+    database_port: 5432
+    database_name: orangehrm_portos
+    database_user: orangehrm_user
+    database_password: A5xg14Ns2M4QUQ7bu0fE2GsU6WFzyOaX
+    
+    # Mailer configuration
+    mailer_transport: smtp
+    mailer_host: localhost
+    mailer_user: ~
+    mailer_password: ~
+    
+    # Security
+    secret: def50200e56d9e4db2f0a3fb5e2d556da8f8b42ee99e9b585d8e82f8e5c7f96b1
+    csrf_protection: true
+    
+    # Session configuration
+    session_name: orangehrm
+    session_cookie_lifetime: 0
+    session_cookie_httponly: true
+    
+    # Locale
+    locale: es
+    
+    # Installation status
+    installed: true
+    
+    # Organization info
+    organization_name: "Portos International"
+    organization_country: "MX"

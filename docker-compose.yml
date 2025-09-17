@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_UPLOAD_MAX_FILESIZE=32M
+      - PHP_POST_MAX_SIZE=32M
+      - PHP_MAX_EXECUTION_TIME=600
+    volumes:
+      - ./data:/var/www/html/data
+      - ./logs:/var/www/html/symfony/log
+    depends_on:
+      - postgres
+    networks:
+      - orangehrm-network
+
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: orangehrm_portos
+      POSTGRES_USER: orangehrm_user
+      POSTGRES_PASSWORD: PortosAdmin123!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - orangehrm-network
+
+volumes:
+  postgres_data:
+
+networks:
+  orangehrm-network:
+    driver: bridge

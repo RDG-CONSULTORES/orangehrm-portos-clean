@@ -1,0 +1,52 @@
+doctrine:
+    dbal:
+        driver: pdo_pgsql
+        host: "%database_host%"
+        port: "%database_port%"
+        dbname: "%database_name%"
+        user: "%database_user%"
+        password: "%database_password%"
+        charset: UTF8
+        server_version: 13.0
+        mapping_types:
+            enum: string
+            set: string
+        options:
+            # PostgreSQL specific options
+            1002: "SET NAMES 'UTF8'"
+
+    orm:
+        auto_generate_proxy_classes: "%kernel.debug%"
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+        mappings:
+            OrangeHRMCorePlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmCorePlugin/config/doctrine"
+                prefix: OrangeHRM\Core\Entity
+                is_bundle: false
+            OrangeHRMPimPlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmPimPlugin/config/doctrine"
+                prefix: OrangeHRM\Pim\Entity
+                is_bundle: false
+            OrangeHRMLeavePlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmLeavePlugin/config/doctrine"
+                prefix: OrangeHRM\Leave\Entity
+                is_bundle: false
+            OrangeHRMTimePlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmTimePlugin/config/doctrine"
+                prefix: OrangeHRM\Time\Entity
+                is_bundle: false
+            OrangeHRMAttendancePlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmAttendancePlugin/config/doctrine"
+                prefix: OrangeHRM\Attendance\Entity
+                is_bundle: false
+            OrangeHRMAdminPlugin:
+                type: yml
+                dir: "%kernel.root_dir%/../plugins/orangehrmAdminPlugin/config/doctrine"
+                prefix: OrangeHRM\Admin\Entity
+                is_bundle: false

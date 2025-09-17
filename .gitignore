@@ -1,0 +1,16 @@
+# OrangeHRM GitIgnore
+/symfony/cache/
+/symfony/log/
+/lib/confs/Conf.php.local
+/src/config/parameters.yml.local
+.env
+.env.local
+*.log
+.DS_Store
+node_modules/
+vendor/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
