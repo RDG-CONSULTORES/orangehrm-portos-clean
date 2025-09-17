@@ -3,13 +3,26 @@ set -e
 
 echo "🚀 Starting OrangeHRM for Portos International..."
 
-# Wait for database to be ready
-echo "⏳ Waiting for PostgreSQL database..."
-until PGPASSWORD=$DATABASE_PASSWORD psql -h "$DATABASE_HOST" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c '\q' 2>/dev/null; do
-  echo "PostgreSQL is unavailable - sleeping"
-  sleep 2
-done
-echo "✅ PostgreSQL is ready!"
+# Set default database values if not provided
+DATABASE_HOST=${DATABASE_HOST:-dpg-d34pm0ffte5s73abeq0g-a.oregon-postgres.render.com}
+DATABASE_USER=${DATABASE_USER:-orangehrm_user}
+DATABASE_NAME=${DATABASE_NAME:-orangehrm_portos}
+DATABASE_PASSWORD=${DATABASE_PASSWORD:-A5xg14Ns2M4QUQ7bu0fE2GsU6WFzyOaX}
+
+echo "📊 Database config:"
+echo "Host: $DATABASE_HOST"
+echo "User: $DATABASE_USER"
+echo "Database: $DATABASE_NAME"
+
+# Wait for database to be ready (only if external DB)
+if [ "$DATABASE_HOST" != "localhost" ] && [ "$DATABASE_HOST" != "postgres" ]; then
+    echo "⏳ Waiting for external PostgreSQL database..."
+    until PGPASSWORD=$DATABASE_PASSWORD psql -h "$DATABASE_HOST" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c '\q' 2>/dev/null; do
+      echo "PostgreSQL is unavailable - sleeping"
+      sleep 2
+    done
+    echo "✅ PostgreSQL is ready!"
+fi
 
 # Check if installation is needed
 if [ ! -f "/var/www/html/lib/confs/INSTALLED" ]; then
