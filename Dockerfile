@@ -5,10 +5,11 @@ FROM orangehrm/orangehrm:5.7
 ENV TZ=America/Mexico_City
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar utilidades adicionales para PostgreSQL
+# Instalar utilidades adicionales para PostgreSQL y expect
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
+    expect \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorios necesarios

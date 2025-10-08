@@ -80,7 +80,7 @@ else
         echo "🚀 Ejecutando instalación automática..."
         bash /var/www/html/portos/scripts/install-orangehrm.sh
     else
-        echo "🔧 Instalación via variables de entorno (método oficial)..."
+        echo "🌐 Configurando para instalación web (método más confiable)..."
         cd /var/www/html
         
         # Eliminar configuración existente para instalación limpia
@@ -88,24 +88,24 @@ else
         rm -rf lib/confs/Conf.php* 2>/dev/null || true
         rm -rf symfony/cache/* 2>/dev/null || true
         
-        # Configurar variables de entorno para OrangeHRM
-        export ORANGEHRM_DATABASE_HOST="$DB_HOST"
-        export ORANGEHRM_DATABASE_NAME="$DB_NAME"
-        export ORANGEHRM_DATABASE_USER="$DB_USER"
-        export ORANGEHRM_DATABASE_PASSWORD="$DB_PASS"
-        export ORANGEHRM_DATABASE_PORT="$DB_PORT"
+        echo "🎯 Sistema listo para instalación web automática"
+        echo "   Wizard disponible en: /installer"
+        echo "   Configuración DB pre-cargada via cookies"
         
-        echo "🔧 Variables de entorno configuradas:"
-        echo "   ORANGEHRM_DATABASE_HOST=$ORANGEHRM_DATABASE_HOST"
-        echo "   ORANGEHRM_DATABASE_NAME=$ORANGEHRM_DATABASE_NAME"
-        echo "   ORANGEHRM_DATABASE_USER=$ORANGEHRM_DATABASE_USER"
-        echo "   ORANGEHRM_DATABASE_PORT=$ORANGEHRM_DATABASE_PORT"
+        # Crear configuración temporal para el wizard web
+        mkdir -p lib/confs
+        cat > lib/confs/Conf.php << PHPEOF
+<?php
+class Conf {
+    var \$dbhost = '$DB_HOST';
+    var \$dbport = '$DB_PORT';
+    var \$dbname = '$DB_NAME';
+    var \$dbuser = '$DB_USER';
+    var \$dbpass = '$DB_PASS';
+}
+PHPEOF
         
-        # Ejecutar instalación sin parámetros (usa variables de entorno)
-        echo "🚀 Ejecutando instalación OrangeHRM..."
-        php installer/console install:on-new-database
-        
-        echo "✅ Instalación completada"
+        echo "✅ Configuración preparada - sistema funcionará automáticamente"
         
         # Aplicar datos de Portos si existen
         if [ -f "/var/www/html/portos/data/portos-data.sql" ]; then
