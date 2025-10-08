@@ -42,7 +42,7 @@ fi
 echo "✅ Variables de entorno configuradas correctamente"
 
 # Parsear DATABASE_URL
-DB_HOST=$(echo $DATABASE_URL | sed 's/.*@\(.*\):.*/\1/')
+DB_HOST=$(echo $DATABASE_URL | sed 's/.*@\([^:]*\).*/\1/')
 DB_PORT=$(echo $DATABASE_URL | sed 's/.*:\([0-9]*\)\/.*/\1/')
 DB_NAME=$(echo $DATABASE_URL | sed 's/.*\/\([^?]*\).*/\1/')
 DB_USER=$(echo $DATABASE_URL | sed 's/.*:\/\/\([^:]*\):.*/\1/')
