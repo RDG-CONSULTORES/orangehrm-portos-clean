@@ -1,0 +1,14 @@
+prod:
+  doctrine:
+    default_connection: default
+    dbal:
+      default_connection: default
+      connections:
+        default:
+          driver: pdo_pgsql
+          host: dpg-d34pm0ffte5s73abeq0g-a.oregon-postgres.render.com
+          port: 5432
+          dbname: orangehrm_portos
+          user: orangehrm_user
+          password: A5xg14Ns2M4QUQ7bu0fE2GsU6WFzyOaX
+          charset: utf8

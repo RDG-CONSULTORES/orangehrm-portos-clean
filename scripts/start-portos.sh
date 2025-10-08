@@ -65,6 +65,41 @@ fi
 
 echo "✅ Conexión PostgreSQL exitosa"
 
+# Configurar PHP para PostgreSQL
+echo "🔧 Configurando PHP para PostgreSQL..."
+cat > /etc/php/8.2/apache2/conf.d/30-pgsql.ini << EOF
+extension=pgsql
+extension=pdo_pgsql
+EOF
+
+# Configurar variables de entorno para OrangeHRM
+export ORM_DB_HOST="$DB_HOST"
+export ORM_DB_PORT="$DB_PORT"
+export ORM_DB_NAME="$DB_NAME"
+export ORM_DB_USER="$DB_USER"
+export ORM_DB_PASSWORD="$DB_PASS"
+
+# Crear configuración de base de datos para OrangeHRM
+mkdir -p /var/www/html/lib/confs
+cat > /var/www/html/lib/confs/database.yml << EOF
+prod:
+  doctrine:
+    default_connection: default
+    dbal:
+      default_connection: default
+      connections:
+        default:
+          driver: pdo_pgsql
+          host: $DB_HOST
+          port: $DB_PORT
+          dbname: $DB_NAME
+          user: $DB_USER
+          password: $DB_PASS
+          charset: utf8
+EOF
+
+echo "✅ PostgreSQL configurado correctamente"
+
 # Verificar si OrangeHRM ya está instalado
 echo "🔍 Verificando estado de instalación..."
 table_count=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'ohrm_%';" 2>/dev/null | tr -d ' ' || echo "0")

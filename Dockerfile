@@ -5,12 +5,18 @@ FROM orangehrm/orangehrm:5.7
 ENV TZ=America/Mexico_City
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar utilidades adicionales para PostgreSQL y expect
+# Instalar utilidades adicionales para PostgreSQL y PHP PostgreSQL
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
     expect \
+    php-pgsql \
+    php8.2-pgsql \
     && rm -rf /var/lib/apt/lists/*
+
+# Habilitar extensión PostgreSQL para PHP
+RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
+    && docker-php-ext-install pdo pdo_pgsql pgsql
 
 # Crear directorios necesarios
 RUN mkdir -p /var/www/html/portos/config \
