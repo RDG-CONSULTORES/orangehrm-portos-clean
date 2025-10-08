@@ -73,38 +73,39 @@ if [ "$table_count" -gt "50" ]; then
     echo "✅ OrangeHRM ya está instalado ($table_count tablas)"
     echo "🎯 Iniciando sistema existente..."
 else
-    echo "🔧 Intentando instalación directa SQL primero..."
+    echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
+    echo "========================================="
+    echo "🎯 URL: https://orangehrm-portos-clean.onrender.com/installer"
+    echo ""
     
-    # Intentar instalación directa
-    if [ -f "/var/www/html/portos/scripts/direct-install.sh" ]; then
-        echo "🚀 Ejecutando instalación SQL directa..."
-        bash /var/www/html/portos/scripts/direct-install.sh
-    else
-        echo "🌐 Fallback: Instalación VIA WEB"
-        echo "   URL: https://orangehrm-portos-clean.onrender.com/installer"
-        
-        cd /var/www/html
-        
-        # Limpiar para instalación web
-        echo "🧹 Preparando instalación web..."
-        rm -rf lib/confs/Conf.php* 2>/dev/null || true
-        rm -rf symfony/cache/* 2>/dev/null || true
-        
-        echo "✅ Sistema web listo"
-        echo "💡 Credenciales sugeridas:"
-        echo "   Admin User: admin"
-        echo "   Admin Pass: PortosAdmin123!"
-        echo "   Organization: Portos International"
-        echo "   Country: Mexico"
-    fi
-        
-        # Aplicar datos de Portos si existen
-        if [ -f "/var/www/html/portos/data/portos-data.sql" ]; then
-            echo "🏢 Aplicando datos de Portos International..."
-            PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f /var/www/html/portos/data/portos-data.sql
-            echo "✅ Datos de Portos aplicados"
-        fi
-    fi
+    cd /var/www/html
+    
+    # Limpiar para instalación web limpia
+    echo "🧹 Preparando instalación web..."
+    rm -rf lib/confs/Conf.php* 2>/dev/null || true
+    rm -rf symfony/cache/* 2>/dev/null || true
+    
+    echo "✅ Sistema listo para configurar via web"
+    echo ""
+    echo "📋 DATOS PARA EL WIZARD:"
+    echo "========================"
+    echo "Database Host: $DB_HOST"
+    echo "Database Port: $DB_PORT"  
+    echo "Database Name: $DB_NAME"
+    echo "Database User: $DB_USER"
+    echo "Database Pass: [YA CONFIGURADO]"
+    echo ""
+    echo "👤 ADMIN SUGERIDO:"
+    echo "=================="
+    echo "Username: admin"
+    echo "Password: PortosAdmin123!"
+    echo "Email: admin@portosinternational.com"
+    echo ""
+    echo "🏢 ORGANIZACIÓN:"
+    echo "================"
+    echo "Name: Portos International"
+    echo "Country: Mexico"
+    echo "Timezone: America/Mexico_City"
 fi
 
 # Configurar permisos finales
