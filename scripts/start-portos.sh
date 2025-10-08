@@ -80,40 +80,32 @@ else
         echo "🚀 Ejecutando instalación automática..."
         bash /var/www/html/portos/scripts/install-orangehrm.sh
     else
-        echo "🔧 Instalación manual via CLI..."
+        echo "🔧 Instalación via variables de entorno (método oficial)..."
         cd /var/www/html
         
-        # Crear configuración temporal
-        mkdir -p lib/confs
-        cat > lib/confs/Conf.php << PHPEOF
-<?php
-class Conf {
-    var \$dbhost = '$DB_HOST';
-    var \$dbport = '$DB_PORT';
-    var \$dbname = '$DB_NAME';
-    var \$dbuser = '$DB_USER';
-    var \$dbpass = '$DB_PASS';
-}
-PHPEOF
+        # Eliminar configuración existente para instalación limpia
+        echo "🧹 Limpiando configuración previa..."
+        rm -rf lib/confs/Conf.php* 2>/dev/null || true
+        rm -rf symfony/cache/* 2>/dev/null || true
         
-        # Ejecutar instalador CLI con comando oficial correcto
-        php installer/console install:on-new-database \
-            --db-host="$DB_HOST" \
-            --db-port="$DB_PORT" \
-            --db-name="$DB_NAME" \
-            --db-user="$DB_USER" \
-            --db-password="$DB_PASS" \
-            --admin-username="admin" \
-            --admin-password="PortosAdmin123!" \
-            --admin-first-name="Administrador" \
-            --admin-last-name="Portos" \
-            --admin-email="admin@portosinternational.com" \
-            --organization-name="Portos International" \
-            --country="MX" \
-            --timezone="America/Mexico_City" \
-            --registration-consent
+        # Configurar variables de entorno para OrangeHRM
+        export ORANGEHRM_DATABASE_HOST="$DB_HOST"
+        export ORANGEHRM_DATABASE_NAME="$DB_NAME"
+        export ORANGEHRM_DATABASE_USER="$DB_USER"
+        export ORANGEHRM_DATABASE_PASSWORD="$DB_PASS"
+        export ORANGEHRM_DATABASE_PORT="$DB_PORT"
         
-        echo "✅ Instalación CLI completada"
+        echo "🔧 Variables de entorno configuradas:"
+        echo "   ORANGEHRM_DATABASE_HOST=$ORANGEHRM_DATABASE_HOST"
+        echo "   ORANGEHRM_DATABASE_NAME=$ORANGEHRM_DATABASE_NAME"
+        echo "   ORANGEHRM_DATABASE_USER=$ORANGEHRM_DATABASE_USER"
+        echo "   ORANGEHRM_DATABASE_PORT=$ORANGEHRM_DATABASE_PORT"
+        
+        # Ejecutar instalación sin parámetros (usa variables de entorno)
+        echo "🚀 Ejecutando instalación OrangeHRM..."
+        php installer/console install:on-new-database
+        
+        echo "✅ Instalación completada"
         
         # Aplicar datos de Portos si existen
         if [ -f "/var/www/html/portos/data/portos-data.sql" ]; then
