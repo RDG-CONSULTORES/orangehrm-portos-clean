@@ -96,24 +96,21 @@ class Conf {
 }
 PHPEOF
         
-        # Ejecutar instalador CLI
-        php installer/console install:on-new-database \
-            --db-type="pgsql" \
-            --db-host="$DB_HOST" \
-            --db-port="$DB_PORT" \
-            --db-name="$DB_NAME" \
-            --db-user="$DB_USER" \
-            --db-password="$DB_PASS" \
+        # Ejecutar instalador CLI con comandos correctos
+        php installer/console install \
+            --database-host="$DB_HOST" \
+            --database-port="$DB_PORT" \
+            --database-name="$DB_NAME" \
+            --database-user="$DB_USER" \
+            --database-password="$DB_PASS" \
             --admin-username="admin" \
             --admin-password="PortosAdmin123!" \
             --admin-first-name="Administrador" \
             --admin-last-name="Portos" \
             --admin-email="admin@portosinternational.com" \
             --organization-name="Portos International" \
-            --country="MX" \
-            --timezone="America/Mexico_City" \
-            --registration-consent \
-            --no-interaction
+            --country-code="MX" \
+            --timezone="America/Mexico_City"
         
         echo "✅ Instalación CLI completada"
         
