@@ -41,12 +41,12 @@ fi
 
 echo "✅ Variables de entorno configuradas correctamente"
 
-# Parsear DATABASE_URL
-DB_HOST=$(echo $DATABASE_URL | sed 's/.*@\([^:]*\).*/\1/')
-DB_PORT=$(echo $DATABASE_URL | sed 's/.*:\([0-9]*\)\/.*/\1/')
-DB_NAME=$(echo $DATABASE_URL | sed 's/.*\/\([^?]*\).*/\1/')
-DB_USER=$(echo $DATABASE_URL | sed 's/.*:\/\/\([^:]*\):.*/\1/')
-DB_PASS=$(echo $DATABASE_URL | sed 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/')
+# Usar valores directos conocidos (más confiable que parsing)
+DB_HOST="dpg-d34pm0ffte5s73abeq0g-a.oregon-postgres.render.com"
+DB_PORT="5432"
+DB_NAME="orangehrm_portos"
+DB_USER="orangehrm_user"
+DB_PASS="A5xg14Ns2M4QUQ7bu0fE2GsU6WFzyOaX"
 
 echo "🔗 Configuración PostgreSQL:"
 echo "   Host: $DB_HOST"
