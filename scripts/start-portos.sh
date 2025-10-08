@@ -85,8 +85,12 @@ export ORM_DB_NAME="$DB_NAME"
 export ORM_DB_USER="$DB_USER"
 export ORM_DB_PASSWORD="$DB_PASS"
 
-# Crear configuración de base de datos para OrangeHRM
+# Crear directorios necesarios para configuración
 mkdir -p /var/www/html/lib/confs
+mkdir -p /var/www/html/installer/lib/confs
+mkdir -p /var/www/html/symfony/config
+
+# Crear configuración de base de datos para OrangeHRM
 cat > /var/www/html/lib/confs/Conf.php << EOF
 <?php
 class Conf {
