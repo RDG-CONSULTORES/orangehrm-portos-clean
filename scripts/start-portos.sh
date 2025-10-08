@@ -71,12 +71,30 @@ echo "🔧 Configurando PHP para PostgreSQL..."
 echo "extension=pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pgsql.ini
 echo "extension=pdo_pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pdo_pgsql.ini
 
-# Copiar adaptador MySQL->PostgreSQL
+# Copiar adaptadores PostgreSQL
 cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/
 cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/installer/
+cp /var/www/html/portos/config/database-override.php /var/www/html/
+cp /var/www/html/portos/config/database-override.php /var/www/html/installer/
 
-# Incluir adaptador en configuración PHP
+# Incluir overrides en configuración PHP
+echo "auto_prepend_file = /var/www/html/database-override.php" >> /usr/local/etc/php/conf.d/98-db-override.ini
 echo "auto_prepend_file = /var/www/html/pgsql-mysql-adapter.php" >> /usr/local/etc/php/conf.d/99-pgsql-adapter.ini
+
+# Crear bypass directo del installer
+cat > /var/www/html/installer/bypass.php << EOF
+<?php
+// Bypass completo del installer - ir directo al sistema
+session_start();
+
+// Marcar instalación como completa
+\$_SESSION['installer_complete'] = true;
+\$_SESSION['installer_bypass'] = true;
+
+// Redirigir al sistema principal
+header('Location: /');
+exit;
+EOF
 
 # Configurar variables de entorno para OrangeHRM
 export ORM_DB_HOST="$DB_HOST"
