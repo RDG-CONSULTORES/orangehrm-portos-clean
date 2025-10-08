@@ -1,74 +1,39 @@
-# OrangeHRM Dockerfile - PostgreSQL Edition
-FROM php:8.0-apache
+# OrangeHRM Portos International - Instalación Limpia
+FROM orangehrm/orangehrm:5.7
 
-# Install system dependencies
+# Configurar zona horaria para México
+ENV TZ=America/Mexico_City
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar utilidades adicionales para PostgreSQL
 RUN apt-get update && apt-get install -y \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev \
-    libicu-dev \
-    libxml2-dev \
-    libzip-dev \
-    libpq-dev \
-    libldap2-dev \
+    postgresql-client \
     curl \
-    wget \
-    unzip \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu \
-    && docker-php-ext-install -j$(nproc) \
-    gd \
-    intl \
-    pdo \
-    pdo_pgsql \
-    zip \
-    opcache \
-    soap \
-    bcmath \
-    ldap \
-    && pecl install apcu \
-    && docker-php-ext-enable apcu
+# Crear directorios necesarios
+RUN mkdir -p /var/www/html/portos/config \
+             /var/www/html/portos/scripts \
+             /var/www/html/portos/data
 
-# Enable Apache modules
-RUN a2enmod rewrite headers expires
+# Copiar archivos de configuración
+COPY config/ /var/www/html/portos/config/
+COPY scripts/ /var/www/html/portos/scripts/
+COPY data/ /var/www/html/portos/data/
 
-# Set working directory
-WORKDIR /var/www/html
+# Hacer scripts ejecutables
+RUN chmod +x /var/www/html/portos/scripts/*.sh
 
-# Download OrangeHRM 5.7
-RUN wget -q https://github.com/orangehrm/orangehrm/releases/download/v5.7/orangehrm-5.7.zip \
-    && unzip -q orangehrm-5.7.zip \
-    && mv orangehrm-5.7/* . \
-    && mv orangehrm-5.7/.htaccess . \
-    && rmdir orangehrm-5.7 \
-    && rm orangehrm-5.7.zip
+# Script de inicio personalizado para Portos
+COPY scripts/start-portos.sh /usr/local/bin/start-portos.sh
+RUN chmod +x /usr/local/bin/start-portos.sh
 
-# Copy pre-configured files
-COPY config/Conf.php lib/confs/Conf.php
-COPY config/parameters.yml symfony/config/parameters.yml
-COPY config/doctrine.yml symfony/config/doctrine.yml
-COPY config/log_settings.php src/config/log_settings.php
+# Configurar permisos
+RUN chown -R www-data:www-data /var/www/html/portos
+RUN chmod -R 755 /var/www/html/portos
 
-# Copy initialization scripts
-COPY scripts/ /docker-entrypoint-initdb.d/
+# Puerto para Render
+EXPOSE 10000
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 777 symfony/cache symfony/log lib/confs
-
-# Copy custom Apache configuration
-COPY config/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
-
-# Copy and set entrypoint
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-EXPOSE 80
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+# Usar nuestro script de inicio personalizado
+CMD ["/usr/local/bin/start-portos.sh"]

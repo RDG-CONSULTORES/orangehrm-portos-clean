@@ -2,43 +2,59 @@ services:
   - type: web
     name: orangehrm-portos-clean
     runtime: docker
+    plan: free
+    region: oregon
+    branch: main
     dockerfilePath: ./Dockerfile
-    plan: free
-    buildCommand: docker build -t orangehrm-portos .
-    healthCheckPath: /
+    env: docker
     envVars:
-      - key: APACHE_DOCUMENT_ROOT
-        value: /var/www/html
-      - key: PHP_MEMORY_LIMIT
-        value: 256M
-      - key: PHP_UPLOAD_MAX_FILESIZE
-        value: 32M
-      - key: PHP_POST_MAX_SIZE
-        value: 32M
-      - key: DATABASE_HOST
+      # Conexión a base de datos existente
+      - key: DATABASE_URL
         fromDatabase:
-          name: orangehrm-postgres-clean
-          property: host
-      - key: DATABASE_PORT
-        fromDatabase:
-          name: orangehrm-postgres-clean
-          property: port
-      - key: DATABASE_NAME
-        fromDatabase:
-          name: orangehrm-postgres-clean
-          property: database
-      - key: DATABASE_USER
-        fromDatabase:
-          name: orangehrm-postgres-clean
-          property: user
-      - key: DATABASE_PASSWORD
-        fromDatabase:
-          name: orangehrm-postgres-clean
-          property: password
+          name: orangehrm-portos-db
+          property: connectionString
+      
+      # Configuración de la empresa
+      - key: ORANGEHRM_ORGANIZATION_NAME
+        value: "Portos International"
+      - key: ORANGEHRM_ORGANIZATION_ADDRESS
+        value: "Monterrey, Nuevo León, México"
+      - key: ORANGEHRM_COUNTRY
+        value: "MX"
+      
+      # Configuración regional México
+      - key: TZ
+        value: America/Mexico_City
+      - key: PHP_TIMEZONE
+        value: America/Mexico_City
+      - key: ORANGEHRM_LOCALE
+        value: es_MX
+      - key: ORANGEHRM_LANGUAGE
+        value: es
+      - key: ORANGEHRM_CURRENCY
+        value: MXN
+      
+      # Credenciales de administrador
+      - key: ORANGEHRM_ADMIN_USER
+        value: admin
+      - key: ORANGEHRM_ADMIN_PASSWORD
+        value: PortosAdmin123!
+      - key: ORANGEHRM_ADMIN_EMAIL
+        value: admin@portosinternational.com
+      
+      # Puerto para Render
+      - key: PORT
+        value: 10000
+        
+    # Configuración de salud para deployment
+    healthCheckPath: /
+    
+    # Build command personalizado
+    buildCommand: |
+      echo "🚀 Building OrangeHRM Portos International Clean Installation"
+      echo "📦 Using official orangehrm/orangehrm:5.7 image"
+      echo "✅ Build process handled by Docker"
 
-databases:
-  - name: orangehrm-postgres-clean
-    plan: free
-    databaseName: orangehrm_portos
-    user: orangehrm_user
-    postgresMajorVersion: 13
+# Referencia a base de datos existente
+# Nota: La base orangehrm-portos-db ya existe en tu cuenta de Render
+# Este archivo la referencia sin crearla nuevamente
