@@ -71,6 +71,13 @@ echo "🔧 Configurando PHP para PostgreSQL..."
 echo "extension=pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pgsql.ini
 echo "extension=pdo_pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pdo_pgsql.ini
 
+# Copiar adaptador MySQL->PostgreSQL
+cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/
+cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/installer/
+
+# Incluir adaptador en configuración PHP
+echo "auto_prepend_file = /var/www/html/pgsql-mysql-adapter.php" >> /usr/local/etc/php/conf.d/99-pgsql-adapter.ini
+
 # Configurar variables de entorno para OrangeHRM
 export ORM_DB_HOST="$DB_HOST"
 export ORM_DB_PORT="$DB_PORT"
@@ -80,7 +87,20 @@ export ORM_DB_PASSWORD="$DB_PASS"
 
 # Crear configuración de base de datos para OrangeHRM
 mkdir -p /var/www/html/lib/confs
-cat > /var/www/html/lib/confs/database.yml << EOF
+cat > /var/www/html/lib/confs/Conf.php << EOF
+<?php
+class Conf {
+    var \$dbhost = '$DB_HOST';
+    var \$dbport = '$DB_PORT';
+    var \$dbname = '$DB_NAME';
+    var \$dbuser = '$DB_USER';
+    var \$dbpass = '$DB_PASS';
+    var \$version = '5.7';
+}
+EOF
+
+# Crear configuración Doctrine para PostgreSQL
+cat > /var/www/html/lib/confs/doctrine.yml << EOF
 prod:
   doctrine:
     default_connection: default
@@ -95,6 +115,19 @@ prod:
           user: $DB_USER
           password: $DB_PASS
           charset: utf8
+EOF
+
+# Configurar el archivo de instalación para saltarse detección automática
+cat > /var/www/html/installer/lib/confs/Conf.php << EOF
+<?php
+class Conf {
+    var \$dbhost = '$DB_HOST';
+    var \$dbport = '$DB_PORT';
+    var \$dbname = '$DB_NAME';
+    var \$dbuser = '$DB_USER';
+    var \$dbpass = '$DB_PASS';
+    var \$version = '5.7';
+}
 EOF
 
 echo "✅ PostgreSQL configurado correctamente"
