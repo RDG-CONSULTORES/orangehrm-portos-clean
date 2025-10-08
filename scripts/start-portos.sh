@@ -67,10 +67,9 @@ echo "✅ Conexión PostgreSQL exitosa"
 
 # Configurar PHP para PostgreSQL
 echo "🔧 Configurando PHP para PostgreSQL..."
-cat > /etc/php/8.2/apache2/conf.d/30-pgsql.ini << EOF
-extension=pgsql
-extension=pdo_pgsql
-EOF
+# Las extensiones ya están instaladas via docker-php-ext-install
+echo "extension=pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pgsql.ini
+echo "extension=pdo_pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pdo_pgsql.ini
 
 # Configurar variables de entorno para OrangeHRM
 export ORM_DB_HOST="$DB_HOST"
