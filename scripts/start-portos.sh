@@ -73,39 +73,30 @@ if [ "$table_count" -gt "50" ]; then
     echo "✅ OrangeHRM ya está instalado ($table_count tablas)"
     echo "🎯 Iniciando sistema existente..."
 else
-    echo "🔧 OrangeHRM no está instalado - ejecutando instalación automática..."
+    echo "🔧 Intentando instalación directa SQL primero..."
     
-    # Ejecutar instalación limpia
-    if [ -f "/var/www/html/portos/scripts/install-orangehrm.sh" ]; then
-        echo "🚀 Ejecutando instalación automática..."
-        bash /var/www/html/portos/scripts/install-orangehrm.sh
+    # Intentar instalación directa
+    if [ -f "/var/www/html/portos/scripts/direct-install.sh" ]; then
+        echo "🚀 Ejecutando instalación SQL directa..."
+        bash /var/www/html/portos/scripts/direct-install.sh
     else
-        echo "🌐 Configurando para instalación web (método más confiable)..."
+        echo "🌐 Fallback: Instalación VIA WEB"
+        echo "   URL: https://orangehrm-portos-clean.onrender.com/installer"
+        
         cd /var/www/html
         
-        # Eliminar configuración existente para instalación limpia
-        echo "🧹 Limpiando configuración previa..."
+        # Limpiar para instalación web
+        echo "🧹 Preparando instalación web..."
         rm -rf lib/confs/Conf.php* 2>/dev/null || true
         rm -rf symfony/cache/* 2>/dev/null || true
         
-        echo "🎯 Sistema listo para instalación web automática"
-        echo "   Wizard disponible en: /installer"
-        echo "   Configuración DB pre-cargada via cookies"
-        
-        # Crear configuración temporal para el wizard web
-        mkdir -p lib/confs
-        cat > lib/confs/Conf.php << PHPEOF
-<?php
-class Conf {
-    var \$dbhost = '$DB_HOST';
-    var \$dbport = '$DB_PORT';
-    var \$dbname = '$DB_NAME';
-    var \$dbuser = '$DB_USER';
-    var \$dbpass = '$DB_PASS';
-}
-PHPEOF
-        
-        echo "✅ Configuración preparada - sistema funcionará automáticamente"
+        echo "✅ Sistema web listo"
+        echo "💡 Credenciales sugeridas:"
+        echo "   Admin User: admin"
+        echo "   Admin Pass: PortosAdmin123!"
+        echo "   Organization: Portos International"
+        echo "   Country: Mexico"
+    fi
         
         # Aplicar datos de Portos si existen
         if [ -f "/var/www/html/portos/data/portos-data.sql" ]; then
