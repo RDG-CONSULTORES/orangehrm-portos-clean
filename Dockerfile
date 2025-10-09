@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Instalar utilidades adicionales para MySQL
 RUN apt-get update && apt-get install -y \
-    mysql-client \
+    default-mysql-client \
     curl \
     expect \
     && rm -rf /var/lib/apt/lists/*
