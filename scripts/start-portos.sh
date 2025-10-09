@@ -42,12 +42,12 @@ fi
 
 echo "✅ Variables de entorno configuradas correctamente"
 
-# Configuración MySQL Railway
-DB_HOST="hopper.proxy.rlwy.net"
-DB_PORT="54569"
+# Configuración MySQL Railway (Nueva base)
+DB_HOST="shinkansen.proxy.rlwy.net"
+DB_PORT="49981"
 DB_NAME="railway"
 DB_USER="root"
-DB_PASS="LSItgfJsFdgVlFnpcDLtpCRwdCweBLKu"
+DB_PASS="ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE"
 
 echo "🔗 Configuración MySQL Railway:"
 echo "   Host: $DB_HOST"
