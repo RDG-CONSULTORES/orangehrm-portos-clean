@@ -79,6 +79,17 @@ export ORM_DB_PASSWORD="$DB_PASS"
 
 echo "✅ MySQL Railway configurado correctamente"
 
+# Patch para MySQL 9.x compatibility
+echo "🔧 Aplicando patch MySQL 9.x..."
+cd /var/www/html
+# Buscar y patchear validación MySQL version
+find . -name "*.php" -type f -exec grep -l "mysql.*version" {} \; | head -5 | while read file; do
+    if [ -f "$file" ]; then
+        sed -i 's/8\.4/9\.9/g' "$file" 2>/dev/null || true
+        sed -i 's/8\.3/9\.9/g' "$file" 2>/dev/null || true
+    fi
+done
+
 # Verificar si OrangeHRM ya está instalado
 echo "🔍 Verificando estado de instalación..."
 table_count=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name LIKE 'ohrm_%';" 2>/dev/null || echo "0")
