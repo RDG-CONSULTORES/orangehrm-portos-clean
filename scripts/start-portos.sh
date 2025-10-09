@@ -56,16 +56,26 @@ echo "   Base: $DB_NAME"
 echo "   Usuario: $DB_USER"
 echo ""
 
-# Verificar conexión a MySQL (skip por ahora)
+# Verificar conexión a MySQL
 echo "🔍 Verificando conexión MySQL..."
-echo "⚠️ Saltando validación MySQL para debug..."
-# if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
-#     echo "❌ Error conectando a MySQL"
-#     echo "💡 Verificar que Railway MySQL esté funcionando"
-#     exit 1
-# fi
-
-echo "✅ Continuando sin validación MySQL"
+if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
+    echo "❌ Error conectando a MySQL"
+    echo "💡 Verificando estado de Railway MySQL..."
+    echo "🔧 Host: $DB_HOST:$DB_PORT"
+    echo "🔧 Database: $DB_NAME"
+    echo "🔧 User: $DB_USER"
+    # Intentar despertar la base si está dormida
+    mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1;" 2>/dev/null || true
+    sleep 3
+    # Intentar de nuevo
+    if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
+        echo "❌ MySQL no disponible - continuando para debug"
+    else
+        echo "✅ MySQL conectado después de despertar"
+    fi
+else
+    echo "✅ Conexión MySQL exitosa"
+fi
 
 # MySQL está nativamente soportado en OrangeHRM
 echo "🔧 MySQL listo para OrangeHRM..."
@@ -136,6 +146,10 @@ class Conf {
 
     function getDbPort() {
         return $this->dbport;
+    }
+
+    function getDbDsn() {
+        return "mysql:host=" . $this->dbhost . ";port=" . $this->dbport . ";dbname=" . $this->dbname;
     }
 
     function getDbName() {
