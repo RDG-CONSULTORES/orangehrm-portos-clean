@@ -118,54 +118,29 @@ if [ "$table_count" -gt "50" ]; then
         echo "✅ Datos Portos ya están cargados"
     fi
     
-    # Crear archivo de configuración completo para evitar redirect al installer
-    echo "🔧 Configurando archivos de instalación..."
+    # Configurar variables de entorno que OrangeHRM detectará automáticamente
+    echo "🔧 Configurando variables de entorno para OrangeHRM..."
+    export ORANGEHRM_DATABASE_HOST="shinkansen.proxy.rlwy.net"
+    export ORANGEHRM_DATABASE_PORT="49981"
+    export ORANGEHRM_DATABASE_NAME="railway"
+    export ORANGEHRM_DATABASE_USER="root"
+    export ORANGEHRM_DATABASE_PASSWORD="ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE"
+    
+    # Variables adicionales para compatibilidad
+    export DB_HOST="shinkansen.proxy.rlwy.net"
+    export DB_PORT="49981"
+    export DB_DATABASE="railway"
+    export DB_USERNAME="root"
+    export DB_PASSWORD="ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE"
+    
+    # Crear archivo mínimo de configuración
+    mkdir -p /var/www/html/lib/confs
     cat > /var/www/html/lib/confs/Conf.php << 'EOL'
 <?php
+// Configuración mínima - OrangeHRM usará variables de entorno
 class Conf {
-    var $smtphost;
-    var $dbhost;
-    var $dbport;
-    var $dbname;
-    var $dbuser;
-    var $dbpass;
-    var $version;
-
-    function Conf() {
-        $this->dbhost  = 'shinkansen.proxy.rlwy.net';
-        $this->dbport  = 49981;
-        $this->dbname  = 'railway';
-        $this->dbuser  = 'root';
-        $this->dbpass  = 'ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE';
-        $this->version = '5.7';
-    }
-
-    function getDbHost() {
-        return $this->dbhost;
-    }
-
-    function getDbPort() {
-        return $this->dbport;
-    }
-
-    function getDbDsn() {
-        return "mysql:host=" . $this->dbhost . ";port=" . $this->dbport . ";dbname=" . $this->dbname . ";charset=utf8";
-    }
-
-    function getDbName() {
-        return $this->dbname;
-    }
-
-    function getDbUser() {
-        return $this->dbuser;
-    }
-
-    function getDbPass() {
-        return $this->dbpass;
-    }
-
     function getVersion() {
-        return $this->version;
+        return '5.7';
     }
 }
 EOL
