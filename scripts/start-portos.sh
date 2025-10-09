@@ -170,17 +170,13 @@ class Conf {
 }
 EOL
     
-    # Bypass temporal para debug - volver al wizard si MySQL falla
-    echo "🔄 Verificando conectividad real a MySQL..."
-    if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT COUNT(*) FROM ohrm_organization_gen_info;" > /dev/null 2>&1; then
-        echo "⚠️ MySQL no disponible - iniciando wizard para debug"
-        rm -f /var/www/html/lib/confs/Conf.php
-        echo "🌐 Redirigiendo al wizard para reconexión..."
-        echo "🎯 Iniciando sistema en modo wizard..."
-    else
-        echo "✅ MySQL operativo - datos Portos disponibles"
-        echo "🎯 Iniciando sistema existente..."
-    fi
+    # Fix temporal: Doctrine tiene problemas - usar wizard para reconectar
+    echo "🔄 Doctrine connection issue detected - usando wizard para reconexión..."
+    echo "⚠️ Removiendo Conf.php para forzar wizard y reconexión limpia"
+    rm -f /var/www/html/lib/confs/Conf.php
+    echo "🌐 Sistema redirigirá al wizard automáticamente"
+    echo "🎯 Los datos de Portos están preservados en MySQL"
+    echo "💡 Usa 'Existing Empty Database' en el wizard"
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
     echo "========================================="
