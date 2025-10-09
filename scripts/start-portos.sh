@@ -9,11 +9,11 @@ echo "🐳 Usando imagen oficial orangehrm/orangehrm:5.7"
 echo "🏢 Empresa: Portos International - Freight Forwarding"
 echo ""
 
-# Configurar puerto para Railway (Railway configurado en 10000)
+# Configurar puerto para Render
 PORT=${PORT:-10000}
-echo "🌐 Configurando puerto Railway: $PORT"
+echo "🌐 Configurando puerto: $PORT"
 
-# Configurar Apache para Railway
+# Configurar Apache para Render
 echo "Listen $PORT" > /etc/apache2/ports.conf
 
 cat > /etc/apache2/sites-available/000-default.conf << EOF
