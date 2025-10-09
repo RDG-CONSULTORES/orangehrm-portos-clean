@@ -108,6 +108,30 @@ if [ "$table_count" -gt "50" ]; then
         echo "✅ Datos Portos ya están cargados"
     fi
     
+    # Crear archivo de configuración para evitar redirect al installer
+    echo "🔧 Configurando archivos de instalación..."
+    cat > /var/www/html/lib/confs/Conf.php << 'EOL'
+<?php
+class Conf {
+    var $smtphost;
+    var $dbhost;
+    var $dbport;
+    var $dbname;
+    var $dbuser;
+    var $dbpass;
+    var $version;
+
+    function Conf() {
+        $this->dbhost  = 'shinkansen.proxy.rlwy.net';
+        $this->dbport  = '49981';
+        $this->dbname  = 'railway';
+        $this->dbuser  = 'root';
+        $this->dbpass  = 'ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE';
+        $this->version = '5.7';
+    }
+}
+EOL
+    
     echo "🎯 Iniciando sistema existente..."
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
