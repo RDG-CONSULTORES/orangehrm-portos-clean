@@ -17,12 +17,14 @@ RUN apt-get update && apt-get install -y \
 # Crear directorios necesarios
 RUN mkdir -p /var/www/html/portos/config \
              /var/www/html/portos/scripts \
-             /var/www/html/portos/data
+             /var/www/html/portos/data \
+             /var/www/html/api
 
 # Copiar archivos de configuración
 COPY config/ /var/www/html/portos/config/
 COPY scripts/ /var/www/html/portos/scripts/
 COPY data/ /var/www/html/portos/data/
+COPY api/ /var/www/html/api/
 
 # Hacer scripts ejecutables
 RUN chmod +x /var/www/html/portos/scripts/*.sh
