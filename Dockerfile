@@ -5,17 +5,14 @@ FROM orangehrm/orangehrm:5.7
 ENV TZ=America/Mexico_City
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar utilidades adicionales para PostgreSQL
+# Instalar utilidades adicionales para MySQL
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
+    mysql-client \
     curl \
     expect \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Habilitar extensión PostgreSQL para PHP usando docker-php-ext-install
-RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-    && docker-php-ext-install pdo pdo_pgsql pgsql
+# MySQL ya está soportado nativamente en la imagen OrangeHRM
 
 # Crear directorios necesarios
 RUN mkdir -p /var/www/html/portos/config \

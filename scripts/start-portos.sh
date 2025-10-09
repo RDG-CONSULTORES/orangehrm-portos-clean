@@ -41,60 +41,32 @@ fi
 
 echo "✅ Variables de entorno configuradas correctamente"
 
-# Usar valores directos conocidos (más confiable que parsing)
-DB_HOST="dpg-d34pm0ffte5s73abeq0g-a.oregon-postgres.render.com"
-DB_PORT="5432"
-DB_NAME="orangehrm_portos"
-DB_USER="orangehrm_user"
-DB_PASS="A5xg14Ns2M4QUQ7bu0fE2GsU6WFzyOaX"
+# Configuración MySQL Railway
+DB_HOST="hopper.proxy.rlwy.net"
+DB_PORT="54569"
+DB_NAME="railway"
+DB_USER="root"
+DB_PASS="LSItgfJsFdgVlFnpcDLtpCRwdCweBLKu"
 
-echo "🔗 Configuración PostgreSQL:"
+echo "🔗 Configuración MySQL Railway:"
 echo "   Host: $DB_HOST"
 echo "   Puerto: $DB_PORT"
 echo "   Base: $DB_NAME"
 echo "   Usuario: $DB_USER"
 echo ""
 
-# Verificar conexión a PostgreSQL
-echo "🔍 Verificando conexión PostgreSQL..."
-if ! PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT version();" > /dev/null 2>&1; then
-    echo "❌ Error conectando a PostgreSQL"
-    echo "💡 Verificar que orangehrm-portos-db esté funcionando en Render"
+# Verificar conexión a MySQL
+echo "🔍 Verificando conexión MySQL..."
+if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
+    echo "❌ Error conectando a MySQL"
+    echo "💡 Verificar que Railway MySQL esté funcionando"
     exit 1
 fi
 
-echo "✅ Conexión PostgreSQL exitosa"
+echo "✅ Conexión MySQL exitosa"
 
-# Configurar PHP para PostgreSQL
-echo "🔧 Configurando PHP para PostgreSQL..."
-# Las extensiones ya están instaladas via docker-php-ext-install
-echo "extension=pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pgsql.ini
-echo "extension=pdo_pgsql" >> /usr/local/etc/php/conf.d/docker-php-ext-pdo_pgsql.ini
-
-# Copiar adaptadores PostgreSQL
-cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/
-cp /var/www/html/portos/config/pgsql-mysql-adapter.php /var/www/html/installer/
-cp /var/www/html/portos/config/database-override.php /var/www/html/
-cp /var/www/html/portos/config/database-override.php /var/www/html/installer/
-
-# Incluir overrides en configuración PHP
-echo "auto_prepend_file = /var/www/html/database-override.php" >> /usr/local/etc/php/conf.d/98-db-override.ini
-echo "auto_prepend_file = /var/www/html/pgsql-mysql-adapter.php" >> /usr/local/etc/php/conf.d/99-pgsql-adapter.ini
-
-# Crear bypass directo del installer
-cat > /var/www/html/installer/bypass.php << EOF
-<?php
-// Bypass completo del installer - ir directo al sistema
-session_start();
-
-// Marcar instalación como completa
-\$_SESSION['installer_complete'] = true;
-\$_SESSION['installer_bypass'] = true;
-
-// Redirigir al sistema principal
-header('Location: /');
-exit;
-EOF
+# MySQL está nativamente soportado en OrangeHRM
+echo "🔧 MySQL listo para OrangeHRM..."
 
 # Configurar variables de entorno para OrangeHRM
 export ORM_DB_HOST="$DB_HOST"
@@ -103,60 +75,11 @@ export ORM_DB_NAME="$DB_NAME"
 export ORM_DB_USER="$DB_USER"
 export ORM_DB_PASSWORD="$DB_PASS"
 
-# Crear directorios necesarios para configuración
-mkdir -p /var/www/html/lib/confs
-mkdir -p /var/www/html/installer/lib/confs
-mkdir -p /var/www/html/symfony/config
-
-# Crear configuración de base de datos para OrangeHRM
-cat > /var/www/html/lib/confs/Conf.php << EOF
-<?php
-class Conf {
-    var \$dbhost = '$DB_HOST';
-    var \$dbport = '$DB_PORT';
-    var \$dbname = '$DB_NAME';
-    var \$dbuser = '$DB_USER';
-    var \$dbpass = '$DB_PASS';
-    var \$version = '5.7';
-}
-EOF
-
-# Crear configuración Doctrine para PostgreSQL
-cat > /var/www/html/lib/confs/doctrine.yml << EOF
-prod:
-  doctrine:
-    default_connection: default
-    dbal:
-      default_connection: default
-      connections:
-        default:
-          driver: pdo_pgsql
-          host: $DB_HOST
-          port: $DB_PORT
-          dbname: $DB_NAME
-          user: $DB_USER
-          password: $DB_PASS
-          charset: utf8
-EOF
-
-# Configurar el archivo de instalación para saltarse detección automática
-cat > /var/www/html/installer/lib/confs/Conf.php << EOF
-<?php
-class Conf {
-    var \$dbhost = '$DB_HOST';
-    var \$dbport = '$DB_PORT';
-    var \$dbname = '$DB_NAME';
-    var \$dbuser = '$DB_USER';
-    var \$dbpass = '$DB_PASS';
-    var \$version = '5.7';
-}
-EOF
-
-echo "✅ PostgreSQL configurado correctamente"
+echo "✅ MySQL Railway configurado correctamente"
 
 # Verificar si OrangeHRM ya está instalado
 echo "🔍 Verificando estado de instalación..."
-table_count=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'ohrm_%';" 2>/dev/null | tr -d ' ' || echo "0")
+table_count=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name LIKE 'ohrm_%';" 2>/dev/null || echo "0")
 
 if [ "$table_count" -gt "50" ]; then
     echo "✅ OrangeHRM ya está instalado ($table_count tablas)"
