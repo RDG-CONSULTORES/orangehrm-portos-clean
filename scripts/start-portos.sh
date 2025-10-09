@@ -96,6 +96,18 @@ table_count=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$
 
 if [ "$table_count" -gt "50" ]; then
     echo "✅ OrangeHRM ya está instalado ($table_count tablas)"
+    
+    # Verificar si datos Portos ya están cargados
+    portos_check=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e "SELECT COUNT(*) FROM ohrm_organization_gen_info WHERE name = 'Portos International';" 2>/dev/null || echo "0")
+    
+    if [ "$portos_check" -eq "0" ]; then
+        echo "🏢 Cargando datos Portos International..."
+        mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" < /var/www/html/portos/data/portos-data.sql
+        echo "✅ Datos Portos cargados exitosamente"
+    else
+        echo "✅ Datos Portos ya están cargados"
+    fi
+    
     echo "🎯 Iniciando sistema existente..."
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
