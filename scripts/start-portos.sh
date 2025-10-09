@@ -205,9 +205,11 @@ class Conf {
 }
 EOL
     
-    # Mantener Conf.php para evitar redirects y habilitar API
-    echo "✅ Configuración completa - API habilitada"
-    echo "🌐 Sistema listo con API funcionando"
+    # TEMPORAL: Eliminar Conf.php para forzar wizard
+    echo "🚨 FORZANDO REINSTALACIÓN - Eliminando Conf.php"
+    rm -f /var/www/html/lib/confs/Conf.php
+    echo "✅ Sistema listo para wizard web"
+    echo "🌐 Wizard OrangeHRM habilitado"
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
     echo "========================================="

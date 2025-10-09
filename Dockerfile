@@ -26,9 +26,9 @@ COPY scripts/ /var/www/html/portos/scripts/
 COPY data/ /var/www/html/portos/data/
 COPY api/ /var/www/html/api/
 
-# Copiar sistema principal funcional
-COPY index.php /var/www/html/index.php
-COPY dashboard.php /var/www/html/dashboard.php
+# Copiar sistema auxiliar (no sobrescribir index.php de OrangeHRM)
+# COPY index.php /var/www/html/index.php
+COPY dashboard.php /var/www/html/portos-dashboard.php
 
 # Hacer scripts ejecutables
 RUN chmod +x /var/www/html/portos/scripts/*.sh
