@@ -170,13 +170,9 @@ class Conf {
 }
 EOL
     
-    # Fix temporal: Doctrine tiene problemas - usar wizard para reconectar
-    echo "🔄 Doctrine connection issue detected - usando wizard para reconexión..."
-    echo "⚠️ Removiendo Conf.php para forzar wizard y reconexión limpia"
-    rm -f /var/www/html/lib/confs/Conf.php
-    echo "🌐 Sistema redirigirá al wizard automáticamente"
-    echo "🎯 Los datos de Portos están preservados en MySQL"
-    echo "💡 Usa 'Existing Empty Database' en el wizard"
+    # Mantener Conf.php para evitar redirects y habilitar API
+    echo "✅ Configuración completa - API habilitada"
+    echo "🌐 Sistema listo con API funcionando"
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
     echo "========================================="
