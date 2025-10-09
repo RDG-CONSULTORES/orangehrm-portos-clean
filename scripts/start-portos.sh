@@ -9,8 +9,8 @@ echo "🐳 Usando imagen oficial orangehrm/orangehrm:5.7"
 echo "🏢 Empresa: Portos International - Freight Forwarding"
 echo ""
 
-# Configurar puerto para Railway (usa PORT automáticamente)
-PORT=${PORT:-8080}
+# Configurar puerto para Railway (Railway configurado en 10000)
+PORT=${PORT:-10000}
 echo "🌐 Configurando puerto Railway: $PORT"
 
 # Configurar Apache para Railway
