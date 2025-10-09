@@ -170,7 +170,17 @@ class Conf {
 }
 EOL
     
-    echo "🎯 Iniciando sistema existente..."
+    # Bypass temporal para debug - volver al wizard si MySQL falla
+    echo "🔄 Verificando conectividad real a MySQL..."
+    if ! mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT COUNT(*) FROM ohrm_organization_gen_info;" > /dev/null 2>&1; then
+        echo "⚠️ MySQL no disponible - iniciando wizard para debug"
+        rm -f /var/www/html/lib/confs/Conf.php
+        echo "🌐 Redirigiendo al wizard para reconexión..."
+        echo "🎯 Iniciando sistema en modo wizard..."
+    else
+        echo "✅ MySQL operativo - datos Portos disponibles"
+        echo "🎯 Iniciando sistema existente..."
+    fi
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
     echo "========================================="
