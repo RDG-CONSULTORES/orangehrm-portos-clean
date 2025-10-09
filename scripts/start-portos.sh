@@ -108,7 +108,7 @@ if [ "$table_count" -gt "50" ]; then
         echo "✅ Datos Portos ya están cargados"
     fi
     
-    # Crear archivo de configuración para evitar redirect al installer
+    # Crear archivo de configuración completo para evitar redirect al installer
     echo "🔧 Configurando archivos de instalación..."
     cat > /var/www/html/lib/confs/Conf.php << 'EOL'
 <?php
@@ -128,6 +128,30 @@ class Conf {
         $this->dbuser  = 'root';
         $this->dbpass  = 'ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE';
         $this->version = '5.7';
+    }
+
+    function getDbHost() {
+        return $this->dbhost;
+    }
+
+    function getDbPort() {
+        return $this->dbport;
+    }
+
+    function getDbName() {
+        return $this->dbname;
+    }
+
+    function getDbUser() {
+        return $this->dbuser;
+    }
+
+    function getDbPass() {
+        return $this->dbpass;
+    }
+
+    function getVersion() {
+        return $this->version;
     }
 }
 EOL
