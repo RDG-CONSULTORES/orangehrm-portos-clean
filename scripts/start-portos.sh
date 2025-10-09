@@ -133,7 +133,7 @@ class Conf {
 
     function Conf() {
         $this->dbhost  = 'shinkansen.proxy.rlwy.net';
-        $this->dbport  = '49981';
+        $this->dbport  = 49981;
         $this->dbname  = 'railway';
         $this->dbuser  = 'root';
         $this->dbpass  = 'ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE';
@@ -149,7 +149,7 @@ class Conf {
     }
 
     function getDbDsn() {
-        return "mysql:host=" . $this->dbhost . ";port=" . $this->dbport . ";dbname=" . $this->dbname;
+        return "mysql:host=" . $this->dbhost . ";port=" . $this->dbport . ";dbname=" . $this->dbname . ";charset=utf8";
     }
 
     function getDbName() {
