@@ -17,6 +17,9 @@ echo "🔍 Railway PORT variable: ${PORT}"
 # Configurar Apache para Render
 echo "Listen $PORT" > /etc/apache2/ports.conf
 
+# Habilitar mod_rewrite para API
+a2enmod rewrite
+
 cat > /etc/apache2/sites-available/000-default.conf << EOF
 <VirtualHost *:$PORT>
     DocumentRoot /var/www/html
@@ -26,6 +29,22 @@ cat > /etc/apache2/sites-available/000-default.conf << EOF
         AllowOverride All
         Require all granted
         DirectoryIndex index.php index.html
+    </Directory>
+    
+    # API alias para acceso directo
+    Alias /api /var/www/html/api
+    
+    <Directory /var/www/html/api>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+        DirectoryIndex index.php
+        
+        # Configurar rewrite para API REST
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule ^(.*)$ index.php [QSA,L]
     </Directory>
     
     ErrorLog \${APACHE_LOG_DIR}/error.log
