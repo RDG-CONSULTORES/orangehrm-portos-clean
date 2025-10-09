@@ -35,8 +35,8 @@ RUN chmod +x /usr/local/bin/start-portos.sh
 RUN chown -R www-data:www-data /var/www/html/portos
 RUN chmod -R 755 /var/www/html/portos
 
-# Puerto para Render
-EXPOSE 10000
+# Puerto para Railway (dinámico)
+EXPOSE 8080
 
 # Usar nuestro script de inicio personalizado
 CMD ["/usr/local/bin/start-portos.sh"]

@@ -9,11 +9,11 @@ echo "🐳 Usando imagen oficial orangehrm/orangehrm:5.7"
 echo "🏢 Empresa: Portos International - Freight Forwarding"
 echo ""
 
-# Configurar puerto de Render
-PORT=${PORT:-10000}
-echo "🌐 Configurando puerto: $PORT"
+# Configurar puerto para Railway (usa PORT automáticamente)
+PORT=${PORT:-8080}
+echo "🌐 Configurando puerto Railway: $PORT"
 
-# Configurar Apache para Render
+# Configurar Apache para Railway
 echo "Listen $PORT" > /etc/apache2/ports.conf
 
 cat > /etc/apache2/sites-available/000-default.conf << EOF
@@ -87,7 +87,7 @@ if [ "$table_count" -gt "50" ]; then
 else
     echo "🌐 SISTEMA LISTO PARA INSTALACIÓN WEB"
     echo "========================================="
-    echo "🎯 URL: https://orangehrm-portos-clean.onrender.com/installer"
+    echo "🎯 URL: [Railway generará la URL automáticamente]"
     echo ""
     
     cd /var/www/html
@@ -132,7 +132,7 @@ echo ""
 echo "================================================================="
 echo "🎉 PORTOS INTERNATIONAL - SISTEMA LISTO"
 echo "================================================================="
-echo "🌐 URL: https://orangehrm-portos-clean.onrender.com"
+echo "🌐 URL: [Ver dominio en Railway Dashboard]"
 echo "👤 Usuario: admin"
 echo "🔑 Contraseña: PortosAdmin123!"
 echo ""
