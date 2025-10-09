@@ -133,14 +133,55 @@ if [ "$table_count" -gt "50" ]; then
     export DB_USERNAME="root"
     export DB_PASSWORD="ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE"
     
-    # Crear archivo mínimo de configuración
+    # Crear archivo completo de configuración con variables de entorno
     mkdir -p /var/www/html/lib/confs
     cat > /var/www/html/lib/confs/Conf.php << 'EOL'
 <?php
-// Configuración mínima - OrangeHRM usará variables de entorno
 class Conf {
+    var $smtphost;
+    var $dbhost;
+    var $dbport;
+    var $dbname;
+    var $dbuser;
+    var $dbpass;
+    var $version;
+
+    function Conf() {
+        // Usar variables de entorno como fallback
+        $this->dbhost  = $_ENV['ORANGEHRM_DATABASE_HOST'] ?? 'shinkansen.proxy.rlwy.net';
+        $this->dbport  = $_ENV['ORANGEHRM_DATABASE_PORT'] ?? 49981;
+        $this->dbname  = $_ENV['ORANGEHRM_DATABASE_NAME'] ?? 'railway';
+        $this->dbuser  = $_ENV['ORANGEHRM_DATABASE_USER'] ?? 'root';
+        $this->dbpass  = $_ENV['ORANGEHRM_DATABASE_PASSWORD'] ?? 'ZmAqgLKhrfjsVNmaTbrCsfAHkeAZMkVE';
+        $this->version = '5.7';
+    }
+
+    function getDbHost() {
+        return $this->dbhost;
+    }
+
+    function getDbPort() {
+        return $this->dbport;
+    }
+
+    function getDbName() {
+        return $this->dbname;
+    }
+
+    function getDbUser() {
+        return $this->dbuser;
+    }
+
+    function getDbPass() {
+        return $this->dbpass;
+    }
+
     function getVersion() {
-        return '5.7';
+        return $this->version;
+    }
+
+    function getDbDsn() {
+        return "mysql:host=" . $this->getDbHost() . ";port=" . $this->getDbPort() . ";dbname=" . $this->getDbName() . ";charset=utf8";
     }
 }
 EOL
