@@ -192,5 +192,20 @@ echo ""
 echo "🚀 Iniciando Apache en puerto $PORT..."
 echo ""
 
+# Habilitar logs de error PHP para debugging
+echo "🔍 Habilitando logs PHP para debug..."
+echo "log_errors = On" >> /usr/local/etc/php/php.ini
+echo "error_log = /var/log/php_errors.log" >> /usr/local/etc/php/php.ini
+echo "display_errors = On" >> /usr/local/etc/php/php.ini
+
+# Limpiar cache que puede estar corrupto
+echo "🧹 Limpiando cache OrangeHRM..."
+rm -rf /var/www/html/src/cache/* 2>/dev/null || true
+rm -rf /var/www/html/symfony/cache/* 2>/dev/null || true
+
+# Verificar permisos críticos
+chown -R www-data:www-data /var/www/html/lib/confs/
+chmod -R 755 /var/www/html/lib/confs/
+
 # Iniciar Apache
 exec apache2-foreground
