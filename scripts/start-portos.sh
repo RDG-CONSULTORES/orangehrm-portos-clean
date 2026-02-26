@@ -16,8 +16,13 @@ echo "Configurando puerto: $PORT"
 # Configurar Apache
 echo "Listen $PORT" > /etc/apache2/ports.conf
 
+# Fix MPM conflict - ensure only prefork is loaded (required for mod_php)
+a2dismod mpm_event 2>/dev/null || true
+a2dismod mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
+
 # Habilitar mod_rewrite para API
-a2enmod rewrite
+a2enmod rewrite 2>/dev/null || true
 
 cat > /etc/apache2/sites-available/000-default.conf << EOF
 <VirtualHost *:$PORT>
