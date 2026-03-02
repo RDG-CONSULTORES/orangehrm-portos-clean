@@ -2,30 +2,25 @@
 set -e
 
 echo "================================================================="
-echo "ORANGEHRM PORTOS INTERNATIONAL - INSTALACION LIMPIA"
+echo "ORANGEHRM PORTOS INTERNATIONAL"
 echo "================================================================="
 echo "$(date)"
-echo "Usando imagen oficial orangehrm/orangehrm:5.7"
-echo "Empresa: Portos International - Freight Forwarding"
 echo ""
 
-# Configurar puerto para Railway (detectar automaticamente)
+# --- Puerto y Apache ---
 PORT=${PORT:-10000}
-echo "Configurando puerto: $PORT"
-
-# Configurar Apache
+echo "Puerto: $PORT"
 echo "Listen $PORT" > /etc/apache2/ports.conf
 
-# Fix MPM conflict - ensure only prefork is loaded (required for mod_php)
+# Fix MPM conflict (mod_php requires prefork)
 a2dismod mpm_event 2>/dev/null || true
 a2dismod mpm_worker 2>/dev/null || true
 a2enmod mpm_prefork 2>/dev/null || true
-
-# Habilitar mod_rewrite para API
 a2enmod rewrite 2>/dev/null || true
 
 cat > /etc/apache2/sites-available/000-default.conf << EOF
 <VirtualHost *:$PORT>
+    ServerName localhost
     DocumentRoot /var/www/html
 
     <Directory /var/www/html>
@@ -42,7 +37,6 @@ cat > /etc/apache2/sites-available/000-default.conf << EOF
         AllowOverride All
         Require all granted
         DirectoryIndex index.php
-
         RewriteEngine On
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteCond %{REQUEST_FILENAME} !-d
@@ -54,55 +48,27 @@ cat > /etc/apache2/sites-available/000-default.conf << EOF
 </VirtualHost>
 EOF
 
-# Usar variables de entorno de Railway (inyectadas automaticamente via service references)
+# --- Variables de entorno MySQL (Railway) ---
 DB_HOST="${MYSQLHOST:-localhost}"
 DB_PORT="${MYSQLPORT:-3306}"
 DB_NAME="${MYSQLDATABASE:-railway}"
 DB_USER="${MYSQLUSER:-root}"
 DB_PASS="${MYSQLPASSWORD}"
 
-if [ -z "$DB_PASS" ]; then
-    echo "ERROR: MYSQLPASSWORD no encontrada. Verificar variable reference en Railway."
-    echo "Continuando para permitir wizard web..."
-fi
+echo "MySQL: $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
 
-echo "Configuracion MySQL Railway:"
-echo "   Host: $DB_HOST"
-echo "   Puerto: $DB_PORT"
-echo "   Base: $DB_NAME"
-echo "   Usuario: $DB_USER"
-echo ""
-
-# Verificar conexion a MySQL
-echo "Verificando conexion MySQL..."
-if mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
-    echo "Conexion MySQL exitosa"
-else
-    echo "MySQL no disponible aun - reintentando en 5s..."
-    sleep 5
-    if mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT VERSION();" > /dev/null 2>&1; then
-        echo "MySQL conectado despues de espera"
-    else
-        echo "MySQL no disponible - continuando con wizard web"
+# --- Esperar MySQL ---
+echo "Esperando MySQL..."
+for i in $(seq 1 15); do
+    if mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" > /dev/null 2>&1; then
+        echo "MySQL conectado"
+        break
     fi
-fi
+    echo "  intento $i/15..."
+    sleep 3
+done
 
-# Configurar variables de entorno para OrangeHRM
-export ORM_DB_HOST="$DB_HOST"
-export ORM_DB_PORT="$DB_PORT"
-export ORM_DB_NAME="$DB_NAME"
-export ORM_DB_USER="$DB_USER"
-export ORM_DB_PASSWORD="$DB_PASS"
-export ORANGEHRM_DATABASE_HOST="$DB_HOST"
-export ORANGEHRM_DATABASE_PORT="$DB_PORT"
-export ORANGEHRM_DATABASE_NAME="$DB_NAME"
-export ORANGEHRM_DATABASE_USER="$DB_USER"
-export ORANGEHRM_DATABASE_PASSWORD="$DB_PASS"
-
-echo "MySQL Railway configurado correctamente"
-
-# Patch para MySQL 9.x compatibility
-echo "Aplicando patch MySQL 9.x..."
+# --- Patch MySQL 9.x compatibility ---
 cd /var/www/html
 find . -name "*.php" -type f -exec grep -l "mysql.*version" {} \; | head -5 | while read file; do
     if [ -f "$file" ]; then
@@ -111,121 +77,186 @@ find . -name "*.php" -type f -exec grep -l "mysql.*version" {} \; | head -5 | wh
     fi
 done
 
-# Verificar si OrangeHRM ya esta instalado
-echo "Verificando estado de instalacion..."
-table_count=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name LIKE 'ohrm_%';" 2>/dev/null || echo "0")
+# --- Verificar si ya esta instalado ---
+TABLE_COUNT=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e \
+    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name LIKE 'ohrm_%';" 2>/dev/null || echo "0")
 
-if [ "$table_count" -gt "50" ]; then
-    echo "OrangeHRM ya esta instalado ($table_count tablas)"
+if [ "$TABLE_COUNT" -gt "50" ]; then
+    echo "OrangeHRM ya instalado ($TABLE_COUNT tablas ohrm_*)"
+else
+    echo "================================================================="
+    echo "INSTALACION AUTOMATICA (bypass wizard)"
+    echo "================================================================="
 
-    # Verificar si datos Portos ya estan cargados
-    portos_check=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e "SELECT COUNT(*) FROM ohrm_organization_gen_info WHERE name = 'Portos International';" 2>/dev/null || echo "0")
+    # Escribir cli_install_config.yaml con datos de Railway
+    cat > /var/www/html/installer/cli_install_config.yaml << EOYAML
+database:
+  hostName: ${DB_HOST}
+  hostPort: ${DB_PORT}
+  databaseName: ${DB_NAME}
+  privilegedDatabaseUser: ${DB_USER}
+  privilegedDatabasePassword: "${DB_PASS}"
+  useSameDbUserForOrangeHRM: y
+  orangehrmDatabaseUser: ~
+  orangehrmDatabasePassword: ~
+  isExistingDatabase: y
+  enableDataEncryption: n
 
-    if [ "$portos_check" -eq "0" ]; then
-        echo "Cargando datos Portos International..."
-        mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" < /var/www/html/portos/data/portos-data.sql
-        echo "Datos Portos cargados exitosamente"
-    else
-        echo "Datos Portos ya estan cargados"
-    fi
+organization:
+  name: Portos International
+  country: MX
 
-    # Crear Conf.php dinamico con variables de entorno
-    mkdir -p /var/www/html/lib/confs
-    cat > /var/www/html/lib/confs/Conf.php << EOPHP
-<?php
-class Conf {
-    var \$smtphost;
-    var \$dbhost;
-    var \$dbport;
-    var \$dbname;
-    var \$dbuser;
-    var \$dbpass;
-    var \$version;
+admin:
+  adminUserName: admin
+  adminPassword: PortosAdmin123!
+  adminEmployeeFirstName: Portos
+  adminEmployeeLastName: Admin
+  workEmail: admin@portosinternational.com
+  contactNumber: ~
+  registrationConsent: false
 
-    function Conf() {
-        \$this->dbhost  = '${DB_HOST}';
-        \$this->dbport  = ${DB_PORT};
-        \$this->dbname  = '${DB_NAME}';
-        \$this->dbuser  = '${DB_USER}';
-        \$this->dbpass  = '${DB_PASS}';
-        \$this->version = '5.7';
+license:
+  agree: y
+EOYAML
+
+    echo "Config YAML generado. Ejecutando CLI installer..."
+    cd /var/www/html
+    php installer/cli_install.php && echo "CLI install EXITOSO" || {
+        echo "CLI install fallo. Intentando instalacion manual via SQL..."
+
+        # Fallback: ejecutar SQL base + migrations manualmente
+        echo "Ejecutando dbscript-1.sql (schema)..."
+        mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/installer/Migration/V3_3_3/dbscript-1.sql 2>&1 || echo "WARN: dbscript-1 tuvo errores"
+
+        echo "Ejecutando dbscript-2.sql (seed data)..."
+        mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/installer/Migration/V3_3_3/dbscript-2.sql 2>&1 || echo "WARN: dbscript-2 tuvo errores"
+
+        # Ejecutar migrations PHP via el console
+        echo "Ejecutando migrations via console..."
+        php /var/www/html/installer/console install:on-existing-database --no-interaction 2>&1 || {
+            echo "Console migration tambien fallo - continuando con base schema solamente"
+
+            # Crear admin manualmente
+            echo "Creando usuario admin manualmente..."
+            ADMIN_HASH=$(php -r "echo password_hash('PortosAdmin123!', PASSWORD_BCRYPT, ['cost' => 12]);")
+
+            mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" << EOSQL
+-- Crear empleado admin
+INSERT IGNORE INTO hs_hr_employee (employee_id, emp_lastname, emp_firstname, emp_work_email)
+VALUES ('0001', 'Admin', 'Portos', 'admin@portosinternational.com');
+
+-- Crear usuario admin
+INSERT IGNORE INTO ohrm_user (user_role_id, emp_number, user_name, user_password, date_entered)
+VALUES (
+    (SELECT id FROM ohrm_user_role WHERE name = 'Admin' LIMIT 1),
+    (SELECT emp_number FROM hs_hr_employee WHERE employee_id = '0001' LIMIT 1),
+    'admin',
+    '${ADMIN_HASH}',
+    NOW()
+);
+
+-- Configurar organizacion
+INSERT INTO ohrm_organization_gen_info (name, country) VALUES ('Portos International', 'MX')
+ON DUPLICATE KEY UPDATE name = 'Portos International', country = 'MX';
+
+UPDATE ohrm_subunit SET name = 'Portos International' WHERE level = 0;
+
+-- Configurar idioma y registro
+INSERT INTO hs_hr_config (\`key\`, value) VALUES ('admin.localization.default_language', 'es_ES')
+ON DUPLICATE KEY UPDATE value = 'es_ES';
+INSERT INTO hs_hr_config (\`key\`, value) VALUES ('instance.reg_consent', '0')
+ON DUPLICATE KEY UPDATE value = '0';
+EOSQL
+            echo "Admin y organizacion creados"
+        }
     }
 
-    function getDbHost() { return \$this->dbhost; }
-    function getDbPort() { return \$this->dbport; }
-    function getDbName() { return \$this->dbname; }
-    function getDbUser() { return \$this->dbuser; }
-    function getDbPass() { return \$this->dbpass; }
-    function getVersion() { return \$this->version; }
-    function getDbDsn() {
-        return "mysql:host=" . \$this->getDbHost() . ";port=" . \$this->getDbPort() . ";dbname=" . \$this->getDbName() . ";charset=utf8";
+    # Verificar instalacion
+    FINAL_COUNT=$(mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -N -e \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME';" 2>/dev/null || echo "0")
+    echo "Tablas en DB despues de instalacion: $FINAL_COUNT"
+fi
+
+# --- Generar Conf.php (formato OrangeHRM 5.7) ---
+echo "Generando Conf.php (formato 5.7)..."
+mkdir -p /var/www/html/lib/confs
+cat > /var/www/html/lib/confs/Conf.php << EOPHP
+<?php
+
+class Conf
+{
+    private string \$dbHost;
+    private string \$dbPort;
+    private string \$dbName;
+    private string \$dbUser;
+    private string \$dbPass;
+
+    public function __construct()
+    {
+        \$this->dbHost = '${DB_HOST}';
+        \$this->dbPort = '${DB_PORT}';
+        \$this->dbName = '${DB_NAME}';
+        \$this->dbUser = '${DB_USER}';
+        \$this->dbPass = '${DB_PASS}';
+    }
+
+    public function getDbHost(): string
+    {
+        return \$this->dbHost;
+    }
+
+    public function getDbPort(): string
+    {
+        return \$this->dbPort;
+    }
+
+    public function getDbName(): string
+    {
+        return \$this->dbName;
+    }
+
+    public function getDbUser(): string
+    {
+        return \$this->dbUser;
+    }
+
+    public function getDbPass(): string
+    {
+        return \$this->dbPass;
     }
 }
 EOPHP
 
-    echo "Conf.php generado con variables de entorno"
-else
-    echo "SISTEMA LISTO PARA INSTALACION WEB (Wizard)"
-    echo "========================================="
-
-    cd /var/www/html
-
-    # Limpiar para instalacion web limpia
-    rm -rf lib/confs/Conf.php* 2>/dev/null || true
-    rm -rf symfony/cache/* 2>/dev/null || true
-
-    echo ""
-    echo "DATOS PARA EL WIZARD:"
-    echo "========================"
-    echo "Database Host: $DB_HOST"
-    echo "Database Port: $DB_PORT"
-    echo "Database Name: $DB_NAME"
-    echo "Database User: $DB_USER"
-    echo ""
-    echo "ADMIN SUGERIDO:"
-    echo "=================="
-    echo "Username: admin"
-    echo "Password: PortosAdmin123!"
-    echo "Email: admin@portosinternational.com"
-    echo ""
-    echo "ORGANIZACION:"
-    echo "================"
-    echo "Name: Portos International"
-    echo "Country: Mexico"
-    echo "Timezone: America/Mexico_City"
+# --- Generar encryption key si no existe ---
+if [ ! -f /var/www/html/lib/confs/cryptokeys/key.ohrm ]; then
+    echo "Generando encryption key..."
+    mkdir -p /var/www/html/lib/confs/cryptokeys
+    php -r "\$k=''; for (\$i=0;\$i<4;\$i++) \$k.=md5(random_int(10000000,99999999)); echo str_shuffle(\$k);" \
+        > /var/www/html/lib/confs/cryptokeys/key.ohrm
 fi
 
-# Configurar permisos finales
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+# --- Permisos ---
+chown -R www-data:www-data /var/www/html/lib/confs
+chmod -R 755 /var/www/html/lib/confs
+chown -R www-data:www-data /var/www/html/src/cache 2>/dev/null || true
+chown -R www-data:www-data /var/www/html/src/log 2>/dev/null || true
 
 # Limpiar cache
 rm -rf /var/www/html/src/cache/* 2>/dev/null || true
-rm -rf /var/www/html/symfony/cache/* 2>/dev/null || true
 
-echo ""
-echo "================================================================="
-echo "PORTOS INTERNATIONAL - SISTEMA LISTO"
-echo "================================================================="
-echo "Usuario: admin"
-echo "Password: PortosAdmin123!"
-echo ""
-echo "Empresa: Portos International"
-echo "Ubicacion: Monterrey, Nuevo Leon, Mexico"
-echo "Especialidad: Freight Forwarding & International Logistics"
-echo ""
-echo "Iniciando Apache en puerto $PORT..."
-echo ""
-
-# Habilitar logs PHP
+# PHP config
 echo "log_errors = On" >> /usr/local/etc/php/php.ini
 echo "error_log = /var/log/php_errors.log" >> /usr/local/etc/php/php.ini
-echo "display_errors = On" >> /usr/local/etc/php/php.ini
+echo "display_errors = Off" >> /usr/local/etc/php/php.ini
 
-# Permisos criticos
-mkdir -p /var/www/html/lib/confs
-chown -R www-data:www-data /var/www/html/lib/confs/
-chmod -R 755 /var/www/html/lib/confs/
+echo ""
+echo "================================================================="
+echo "PORTOS INTERNATIONAL - LISTO"
+echo "================================================================="
+echo "Usuario: admin / PortosAdmin123!"
+echo "Empresa: Portos International"
+echo "Iniciando Apache en puerto $PORT..."
+echo "================================================================="
+echo ""
 
-# Iniciar Apache
 exec apache2-foreground
