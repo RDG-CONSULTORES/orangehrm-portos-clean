@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 2rem;">
+    <h2 style="border: none; text-align: center;">Sistema de Alta y Baja de Colaboradores</h2>
+    <p style="color: var(--gray-500); margin-bottom: 2rem;">
+        Escanea la INE del colaborador para dar de alta o busca por nombre/CURP para dar de baja.
+    </p>
+</div>
+
+<div class="action-cards">
+    <a href="/ocr/alta" class="action-card">
+        <div class="icon">+</div>
+        <h3>Alta de Colaborador</h3>
+        <p>Sube foto de la INE para extraer datos automaticamente y dar de alta al nuevo colaborador.</p>
+    </a>
+
+    <a href="/ocr/baja" class="action-card">
+        <div class="icon">-</div>
+        <h3>Baja de Colaborador</h3>
+        <p>Busca por nombre o CURP para encontrar al colaborador exacto y registrar su baja.</p>
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+{% block title %}Alta de Colaborador{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Alta de Colaborador</h2>
+    <p style="margin-bottom: 1rem; color: var(--gray-500);">
+        Sube la foto de la INE (frente) para extraer los datos automaticamente.
+    </p>
+
+    <!-- Step 1: Upload -->
+    <div id="step-upload">
+        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon">&#128247;</div>
+            <p><strong>Arrastra la foto de la INE aqui</strong></p>
+            <p>o haz clic para seleccionar archivo</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">JPG, PNG - max 5MB</p>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        </div>
+
+        <div class="image-preview" id="imagePreview" style="display:none;">
+            <img id="previewImg" src="" alt="Preview">
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+            <button class="btn btn-primary btn-lg" id="btnScan" disabled onclick="scanINE()">
+                Escanear INE
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="spinner" id="spinner">
+        <p style="margin-top: 1rem; color: var(--gray-500);">Procesando imagen con OCR...</p>
+    </div>
+</div>
+
+<!-- Step 2: Review & Complete Form -->
+<div id="step-form" style="display:none;">
+    <div class="card">
+        <h2>Datos Extraidos de la INE</h2>
+
+        <div id="ocrAlerts"></div>
+
+        <div style="margin-bottom: 1rem;">
+            <span>Confianza: </span>
+            <span class="confidence" id="confidenceBadge">--</span>
+            <button class="btn btn-secondary" style="float:right; font-size:0.8rem;"
+                    onclick="toggleRawText()">Ver texto crudo</button>
+        </div>
+        <div class="raw-text" id="rawText"></div>
+    </div>
+
+    <form id="altaForm" onsubmit="return crearEmpleado(event)">
+        <div class="card">
+            <h3>Datos Personales (del OCR)</h3>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Nombre(s) *</label>
+                    <input type="text" name="nombre" id="f_nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellido Paterno *</label>
+                    <input type="text" name="apellido_paterno" id="f_apellido_paterno" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellido Materno</label>
+                    <input type="text" name="apellido_materno" id="f_apellido_materno">
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>CURP *</label>
+                    <input type="text" name="curp" id="f_curp" maxlength="18" required
+                           pattern="[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Nacimiento</label>
+                    <input type="date" name="fecha_nacimiento" id="f_fecha_nacimiento">
+                </div>
+                <div class="form-group">
+                    <label>Sexo</label>
+                    <select name="sexo" id="f_sexo">
+                        <option value="">Seleccionar</option>
+                        <option value="H">Hombre</option>
+                        <option value="M">Mujer</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Clave de Elector</label>
+                    <input type="text" name="no_ine" id="f_no_ine">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Sangre</label>
+                    <select name="tipo_sangre">
+                        <option value="">Seleccionar</option>
+                        <option>A+</option><option>A-</option>
+                        <option>B+</option><option>B-</option>
+                        <option>AB+</option><option>AB-</option>
+                        <option>O+</option><option>O-</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Datos Adicionales (captura manual)</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>RFC</label>
+                    <input type="text" name="rfc" maxlength="13">
+                </div>
+                <div class="form-group">
+                    <label>NSS (IMSS)</label>
+                    <input type="text" name="nss" maxlength="11">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Telefono Celular</label>
+                    <input type="tel" name="telefono">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Datos Laborales</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha de Ingreso *</label>
+                    <input type="date" name="fecha_ingreso" id="f_fecha_ingreso" required>
+                </div>
+                <div class="form-group">
+                    <label>Puesto *</label>
+                    <select name="job_title_code" required>
+                        <option value="">Seleccionar puesto</option>
+                        {% for jt in job_titles %}
+                        <option value="{{ jt.id }}">{{ jt.job_title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Grupo Operativo *</label>
+                    <select name="work_station" id="f_work_station" required onchange="filterLocations()">
+                        <option value="">Seleccionar grupo</option>
+                        {% for su in subunits %}
+                        <option value="{{ su.id }}">{{ su.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sucursal</label>
+                    <select name="location_id" id="f_location_id">
+                        <option value="">Seleccionar sucursal</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc.id }}">{{ loc.name }} - {{ loc.city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Turno</label>
+                    <select name="turno">
+                        <option value="">Seleccionar</option>
+                        <option>Matutino</option>
+                        <option>Vespertino</option>
+                        <option>Nocturno</option>
+                        <option>Mixto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Contrato</label>
+                    <select name="tipo_contrato">
+                        <option value="">Seleccionar</option>
+                        <option>Indefinido</option>
+                        <option>Temporal</option>
+                        <option>Por Obra</option>
+                        <option>Capacitacion</option>
+                        <option>Periodo Prueba</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Datos Bancarios</h3>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Banco</label>
+                    <select name="banco">
+                        <option value="">Seleccionar</option>
+                        <option>BBVA</option>
+                        <option>Banorte</option>
+                        <option>Santander</option>
+                        <option>HSBC</option>
+                        <option>Scotiabank</option>
+                        <option>Banamex</option>
+                        <option>Banregio</option>
+                        <option>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>CLABE Interbancaria</label>
+                    <input type="text" name="clabe" maxlength="18">
+                </div>
+                <div class="form-group">
+                    <label>No. INFONAVIT</label>
+                    <input type="text" name="no_infonavit">
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <button type="submit" class="btn btn-success btn-lg" id="btnCrear">
+                Dar de Alta al Colaborador
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Success -->
+<div id="step-success" style="display:none;">
+    <div class="card" style="text-align:center; padding:3rem;">
+        <div style="font-size:4rem; margin-bottom:1rem;">&#10003;</div>
+        <h2 style="border:none; color:var(--green);">Colaborador dado de alta exitosamente</h2>
+        <p id="successMsg" style="margin:1rem 0; font-size:1.1rem;"></p>
+        <div style="margin-top:2rem;">
+            <a href="/ocr/alta" class="btn btn-primary">Dar de alta otro</a>
+            <a href="/ocr/" class="btn btn-secondary" style="margin-left:1rem;">Inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFile = null;
+
+// File input
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    handleFile(e.target.files[0]);
+});
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', function() {
+    this.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+
+function handleFile(file) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        alert('Solo se aceptan imagenes (JPG, PNG)');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        alert('La imagen es muy grande (max 5MB)');
+        return;
+    }
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('btnScan').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function scanINE() {
+    if (!selectedFile) return;
+
+    document.getElementById('btnScan').disabled = true;
+    document.getElementById('spinner').classList.add('active');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+        const resp = await fetch('/ocr/alta/scan', { method: 'POST', body: formData });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            throw new Error(data.detail || 'Error procesando imagen');
+        }
+
+        // Fill form with OCR data
+        fillForm(data);
+
+        document.getElementById('step-upload').style.display = 'none';
+        document.getElementById('spinner').classList.remove('active');
+        document.getElementById('step-form').style.display = 'block';
+
+    } catch (err) {
+        document.getElementById('spinner').classList.remove('active');
+        document.getElementById('btnScan').disabled = false;
+        alert('Error: ' + err.message);
+    }
+}
+
+function fillForm(data) {
+    // OCR extracted fields
+    if (data.nombre) document.getElementById('f_nombre').value = data.nombre;
+    if (data.apellido_paterno) document.getElementById('f_apellido_paterno').value = data.apellido_paterno;
+    if (data.apellido_materno) document.getElementById('f_apellido_materno').value = data.apellido_materno;
+    if (data.curp) document.getElementById('f_curp').value = data.curp;
+    if (data.fecha_nacimiento) document.getElementById('f_fecha_nacimiento').value = data.fecha_nacimiento;
+    if (data.sexo) document.getElementById('f_sexo').value = data.sexo;
+    if (data.clave_elector) document.getElementById('f_no_ine').value = data.clave_elector;
+
+    // Set today as fecha de ingreso
+    document.getElementById('f_fecha_ingreso').value = new Date().toISOString().split('T')[0];
+
+    // Confidence badge
+    const conf = data.confidence || 0;
+    const badge = document.getElementById('confidenceBadge');
+    badge.textContent = Math.round(conf * 100) + '%';
+    badge.className = 'confidence ' + (conf >= 0.8 ? 'high' : conf >= 0.5 ? 'medium' : 'low');
+
+    // Raw text
+    document.getElementById('rawText').textContent = data.raw_text || '';
+
+    // Alerts
+    const alertsDiv = document.getElementById('ocrAlerts');
+    alertsDiv.innerHTML = '';
+
+    if (data.errors && data.errors.length) {
+        data.errors.forEach(err => {
+            alertsDiv.innerHTML += `<div class="alert alert-warning">${err}</div>`;
+        });
+    }
+
+    if (data.curp && !data.curp_valid) {
+        alertsDiv.innerHTML += '<div class="alert alert-warning">El CURP extraido no pasa la validacion del digito verificador. Verifica manualmente.</div>';
+    }
+
+    if (data.curp && data.curp_valid) {
+        alertsDiv.innerHTML += '<div class="alert alert-success">CURP valido: ' + data.curp + '</div>';
+    }
+}
+
+function toggleRawText() {
+    document.getElementById('rawText').classList.toggle('visible');
+}
+
+async function crearEmpleado(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('altaForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    document.getElementById('btnCrear').disabled = true;
+    document.getElementById('btnCrear').textContent = 'Creando...';
+
+    try {
+        const resp = await fetch('/ocr/alta/crear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        const result = await resp.json();
+
+        if (!resp.ok) {
+            throw new Error(result.detail || 'Error creando empleado');
+        }
+
+        document.getElementById('step-form').style.display = 'none';
+        document.getElementById('successMsg').textContent =
+            `${data.nombre} ${data.apellido_paterno} - ID: ${result.employee_id}`;
+        document.getElementById('step-success').style.display = 'block';
+
+    } catch (err) {
+        alert('Error: ' + err.message);
+        document.getElementById('btnCrear').disabled = false;
+        document.getElementById('btnCrear').textContent = 'Dar de Alta al Colaborador';
+    }
+}
+
+function filterLocations() {
+    // For now, show all locations. Could filter by group if mapping exists.
+}
+</script>
+{% endblock %}

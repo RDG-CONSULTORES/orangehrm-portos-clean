@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Baja de Colaborador{% endblock %}
+
+{% block content %}
+<!-- Step 1: Search -->
+<div id="step-search">
+    <div class="card">
+        <h2>Baja de Colaborador</h2>
+        <p style="margin-bottom: 1.5rem; color: var(--gray-500);">
+            Busca al colaborador por nombre, CURP o ID para registrar su baja.
+        </p>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Nombre, CURP o ID del colaborador..."
+                   onkeyup="if(event.key==='Enter') searchEmployee()">
+            <button class="btn btn-primary" onclick="searchEmployee()">Buscar</button>
+        </div>
+
+        <div class="spinner" id="searchSpinner"></div>
+
+        <div id="searchResults"></div>
+    </div>
+</div>
+
+<!-- Step 2: Confirm termination -->
+<div id="step-baja" style="display:none;">
+    <div class="card">
+        <h2>Confirmar Baja</h2>
+
+        <div class="alert alert-info" id="selectedEmployee"></div>
+
+        <form id="bajaForm" onsubmit="return ejecutarBaja(event)">
+            <input type="hidden" name="emp_number" id="b_emp_number">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha Efectiva de Baja *</label>
+                    <input type="date" name="fecha_baja" id="b_fecha_baja" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo de Baja *</label>
+                    <select name="reason_id" id="b_reason_id" required>
+                        <option value="">Seleccionar motivo</option>
+                        {% for reason in reasons %}
+                        <option value="{{ reason.id }}">{{ reason.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Observaciones</label>
+                <textarea name="note" rows="3" placeholder="Detalles adicionales sobre la baja..."></textarea>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="cancelBaja()">Cancelar</button>
+                <button type="submit" class="btn btn-danger" id="btnBaja">Confirmar Baja</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Step 3: Success -->
+<div id="step-success" style="display:none;">
+    <div class="card" style="text-align:center; padding:3rem;">
+        <div style="font-size:4rem; margin-bottom:1rem;">&#10003;</div>
+        <h2 style="border:none; color:var(--green);">Baja registrada exitosamente</h2>
+        <p id="bajaSuccessMsg" style="margin:1rem 0; font-size:1.1rem;"></p>
+        <div style="margin-top:2rem;">
+            <a href="/ocr/baja" class="btn btn-primary">Registrar otra baja</a>
+            <a href="/ocr/" class="btn btn-secondary" style="margin-left:1rem;">Inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedEmp = null;
+
+async function searchEmployee() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query || query.length < 2) {
+        alert('Escribe al menos 2 caracteres para buscar');
+        return;
+    }
+
+    const spinner = document.getElementById('searchSpinner');
+    const resultsDiv = document.getElementById('searchResults');
+    spinner.classList.add('active');
+    resultsDiv.innerHTML = '';
+
+    try {
+        const resp = await fetch(`/ocr/baja/buscar?q=${encodeURIComponent(query)}`);
+        const data = await resp.json();
+
+        spinner.classList.remove('active');
+
+        if (!data.employees || data.employees.length === 0) {
+            resultsDiv.innerHTML = '<div class="alert alert-warning">No se encontraron colaboradores con ese criterio.</div>';
+            return;
+        }
+
+        let html = `<p style="margin-bottom:0.75rem; color:var(--gray-500);">${data.employees.length} resultado(s):</p>`;
+        html += '<ul class="employee-list">';
+
+        data.employees.forEach(emp => {
+            const gender = emp.emp_gender == 1 ? 'H' : 'M';
+            const joined = emp.joined_date || 'N/A';
+            html += `
+                <li class="employee-item" onclick="selectEmployee(${JSON.stringify(emp).replace(/"/g, '&quot;')})">
+                    <div class="emp-info">
+                        <div class="emp-name">
+                            ${emp.emp_firstname || ''} ${emp.emp_middle_name || ''} ${emp.emp_lastname || ''}
+                        </div>
+                        <div class="emp-detail">
+                            CURP: ${emp.curp || 'N/A'} &middot;
+                            ID: ${emp.employee_id || 'N/A'} &middot;
+                            Puesto: ${emp.job_title || 'N/A'}
+                        </div>
+                        <div class="emp-detail">
+                            Grupo: ${emp.grupo_operativo || 'N/A'} &middot;
+                            Sucursal: ${emp.sucursal || 'N/A'} &middot;
+                            Ingreso: ${joined}
+                        </div>
+                    </div>
+                </li>
+            `;
+        });
+
+        html += '</ul>';
+        resultsDiv.innerHTML = html;
+
+    } catch (err) {
+        spinner.classList.remove('active');
+        resultsDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+    }
+}
+
+function selectEmployee(emp) {
+    selectedEmp = emp;
+
+    const fullName = `${emp.emp_firstname || ''} ${emp.emp_middle_name || ''} ${emp.emp_lastname || ''}`.trim();
+    document.getElementById('selectedEmployee').innerHTML = `
+        <strong>${fullName}</strong><br>
+        CURP: ${emp.curp || 'N/A'} &middot;
+        ID: ${emp.employee_id || 'N/A'} &middot;
+        Puesto: ${emp.job_title || 'N/A'}<br>
+        Grupo: ${emp.grupo_operativo || 'N/A'} &middot;
+        Sucursal: ${emp.sucursal || 'N/A'} &middot;
+        Ingreso: ${emp.joined_date || 'N/A'}
+    `;
+
+    document.getElementById('b_emp_number').value = emp.emp_number;
+    document.getElementById('b_fecha_baja').value = new Date().toISOString().split('T')[0];
+
+    document.getElementById('step-search').style.display = 'none';
+    document.getElementById('step-baja').style.display = 'block';
+}
+
+function cancelBaja() {
+    selectedEmp = null;
+    document.getElementById('step-baja').style.display = 'none';
+    document.getElementById('step-search').style.display = 'block';
+}
+
+async function ejecutarBaja(event) {
+    event.preventDefault();
+
+    if (!confirm('Estas seguro de registrar la baja de este colaborador? Esta accion no se puede deshacer facilmente.')) {
+        return false;
+    }
+
+    const form = document.getElementById('bajaForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    document.getElementById('btnBaja').disabled = true;
+    document.getElementById('btnBaja').textContent = 'Procesando...';
+
+    try {
+        const resp = await fetch('/ocr/baja/ejecutar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        const result = await resp.json();
+
+        if (!resp.ok) {
+            throw new Error(result.detail || 'Error registrando baja');
+        }
+
+        const fullName = `${selectedEmp.emp_firstname || ''} ${selectedEmp.emp_lastname || ''}`.trim();
+        document.getElementById('step-baja').style.display = 'none';
+        document.getElementById('bajaSuccessMsg').textContent = `${fullName} - CURP: ${selectedEmp.curp || 'N/A'}`;
+        document.getElementById('step-success').style.display = 'block';
+
+    } catch (err) {
+        alert('Error: ' + err.message);
+        document.getElementById('btnBaja').disabled = false;
+        document.getElementById('btnBaja').textContent = 'Confirmar Baja';
+    }
+
+    return false;
+}
+</script>
+{% endblock %}

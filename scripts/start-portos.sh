@@ -17,6 +17,8 @@ a2dismod mpm_event 2>/dev/null || true
 a2dismod mpm_worker 2>/dev/null || true
 a2enmod mpm_prefork 2>/dev/null || true
 a2enmod rewrite 2>/dev/null || true
+a2enmod proxy 2>/dev/null || true
+a2enmod proxy_http 2>/dev/null || true
 
 cat > /etc/apache2/sites-available/000-default.conf << EOF
 <VirtualHost *:$PORT>
@@ -42,6 +44,11 @@ cat > /etc/apache2/sites-available/000-default.conf << EOF
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteRule ^(.*)$ index.php [QSA,L]
     </Directory>
+
+    # OCR Service proxy
+    ProxyPreserveHost On
+    ProxyPass /ocr http://127.0.0.1:8001/ocr
+    ProxyPassReverse /ocr http://127.0.0.1:8001/ocr
 
     ErrorLog \${APACHE_LOG_DIR}/error.log
     CustomLog \${APACHE_LOG_DIR}/access.log combined
@@ -258,5 +265,18 @@ echo "Empresa: Portos International"
 echo "Iniciando Apache en puerto $PORT..."
 echo "================================================================="
 echo ""
+
+# --- OCR Service ---
+echo "Iniciando OCR Service en puerto 8001..."
+cd /opt/ocr-service
+export MYSQLHOST="${DB_HOST}"
+export MYSQLPORT="${DB_PORT}"
+export MYSQLDATABASE="${DB_NAME}"
+export MYSQLUSER="${DB_USER}"
+export MYSQLPASSWORD="${DB_PASS}"
+/opt/ocr-venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --log-level warning &
+OCR_PID=$!
+echo "OCR Service PID: $OCR_PID"
+cd /var/www/html
 
 exec apache2-foreground

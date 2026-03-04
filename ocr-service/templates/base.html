@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OCR{% endblock %} - EPL CAS</title>
+    <link rel="stylesheet" href="/ocr/static/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>EPL CAS - Sistema de Personal</h1>
+            <span class="subtitle">Alta y Baja de Colaboradores con OCR</span>
+        </div>
+        <nav>
+            <a href="/ocr/" class="{% if active == 'index' %}active{% endif %}">Inicio</a>
+            <a href="/ocr/alta" class="{% if active == 'alta' %}active{% endif %}">Alta</a>
+            <a href="/ocr/baja" class="{% if active == 'baja' %}active{% endif %}">Baja</a>
+            <a href="/" target="_blank">OrangeHRM</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="footer">
+        EPL CAS &middot; Sistema OCR de Personal &middot; Powered by Tesseract + OrangeHRM
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

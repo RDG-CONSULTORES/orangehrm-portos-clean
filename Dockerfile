@@ -5,12 +5,21 @@ FROM orangehrm/orangehrm:5.7
 ENV TZ=America/Mexico_City
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar utilidades adicionales para MySQL
+# Instalar utilidades adicionales para MySQL + OCR
 RUN apt-get update && apt-get install -y \
     default-mysql-client \
     curl \
     expect \
+    python3 python3-pip python3-venv \
+    tesseract-ocr tesseract-ocr-spa \
+    libgl1-mesa-glx libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
+
+# OCR Service - Python venv + dependencies
+RUN python3 -m venv /opt/ocr-venv
+COPY ocr-service/requirements.txt /opt/ocr-service/requirements.txt
+RUN /opt/ocr-venv/bin/pip install --no-cache-dir -r /opt/ocr-service/requirements.txt
+COPY ocr-service/ /opt/ocr-service/
 
 # MySQL ya está soportado nativamente en la imagen OrangeHRM
 
